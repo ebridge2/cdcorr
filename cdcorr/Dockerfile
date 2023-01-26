@@ -1,0 +1,10 @@
+FROM neurodata/graspologic:latest
+
+RUN pip install jupyterlab jupyter
+RUN apt-get update
+RUN apt-get install -y g++ gcc
+
+RUN pip install seaborn dask dask[distributed]
+RUN pip install git+https://github.com/ebridge2/dodiscover
+RUN pip install git+https://github.com/neurodata/hyppo/@cdcorr
+RUN pip install statsmodels
