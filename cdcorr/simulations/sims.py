@@ -160,7 +160,7 @@ def cond_dcorr(Y, T, X, nrep=1000):
     stat, pval = hyppo.conditional.CDcorr(compute_distance=None).test(DY, DT, DX, reps=nrep)
     return pval, stat
 
-def dcorr(Y, T, nrep=1000, **kwargs):
+def dcorr(Y, T, X, nrep=1000):
     DT = sk.metrics.pairwise_distances(ohe(T), metric="l2")
     DY = sk.metrics.pairwise_distances(Y, metric="l2")
     stat, pval = hyppo.independence.Dcorr(compute_distance=None).test(DY, DT, reps=nrep)
