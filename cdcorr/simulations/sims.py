@@ -37,7 +37,7 @@ def simulate_covars_multiclass(causal_preds, balance=1):
     
     for causal_cl, bal_id in zip(causal_preds, balance_id):
         if bal_id == 1:
-            coefs.append((4, 2))
+            coefs.append((10, 10))
         else:
             if causal_cl == 0:
                 coefs.append((2, 8))
@@ -211,3 +211,118 @@ def ohe(T):
     for t in np.unique(T):
         ohe_dat[:,t] = (T == t).astype(int)
     return ohe_dat
+
+    
+def sigmoidal_sim_cate(n, p, balance=1, causal_effect_size=1, covar_effect_size = None, pi=0.5, err_scale = 0.5):
+    rotation = causal_effect_size * np.pi/2  # Angle of rotation of the second group
+    rot_rescale = np.cos(rotation)  # the rescaling factor for the rotation of the second group
+    
+    Ts = np.random.binomial(1, pi, size=n)
+    Xs = simulate_covars(Ts, balance=balance)
+    y_base = sigmoid(8*Xs).reshape(n, 1)
+    Bs = np.sqrt(np.linspace(1/np.sqrt(p), 1/(p**2), p).reshape(1, p))
+    
+    if covar_effect_size is None:
+        covar_effect_size = 2*causal_effect_size
+        Bs_covar = Bs
+    else:
+        Bs_covar = np.ones((1, p))
+        
+    Ys_covar = covar_effect_size*y_base @ Bs
+    
+    rot_vec = np.copy(Ts)
+    rot_vec[Ts == 0] = rot_rescale
+    R = np.eye(n)
+    np.fill_diagonal(R, rot_vec)
+    
+    Ys_covar = R @ (Ys_covar - covar_effect_size/2*Bs)
+    Ys_covar = Ys_covar + covar_effect_size/2*Bs
+    err = np.random.normal(scale=err_scale, size=(n, p)).reshape(n, p)
+    Ys = Ys_covar + err
+    
+    # true signal at a given x
+    Ntrue = 200
+    true_x = np.linspace(-1, 1, int(Ntrue/2))
+    true_x = np.concatenate((true_x, true_x))
+    true_y_base = sigmoid(8*true_x).reshape(Ntrue, 1)
+    true_y_covar = covar_effect_size*true_y_base @ Bs
+    true_t = np.concatenate((np.zeros(int(Ntrue/2)), np.ones(int(Ntrue/2)))).astype(int)
+    rot_vec_true = np.copy(true_t)
+    rot_vec_true[true_t == 0] = rot_rescale
+    R_true = np.eye(Ntrue)
+    np.fill_diagonal(R_true, rot_vec_true)
+    true_y = R_true @ (true_y_covar - covar_effect_size/2*Bs)
+    true_y = true_y + covar_effect_size/2*Bs
+    return(Ys, Ts, Xs, true_y, true_t, true_x)
+
+def nonmonotonic_sim_cate(n, p, balance=1, causal_effect_size=1, covar_effect_size = None, pi=0.5, err_scale = 0.5):
+    Ts = np.random.binomial(1, pi, size=n)
+    Xs = simulate_covars(Ts, balance=balance)
+    y_base = Xs.reshape(-1, 1)
+    Bs = np.sqrt(np.linspace(1/np.sqrt(p), 1/(p**2), p).reshape(1, p))
+    
+    if covar_effect_size is None:
+        covar_effect_size = 2*causal_effect_size
+        Bs_covar = Bs
+    else:
+        Bs_covar = np.ones((1, p))
+    
+    Ys_covar = np.zeros((n, p))
+    Ys_covar[(Xs >= -.3) & (Xs <= .3),:]  = causal_effect_size*Bs
+    Ys_covar[Ts == 0,:] = -Ys_covar[Ts == 0,:]
+    err = np.random.normal(scale=err_scale, size=(n, p)).reshape(n, p)
+    Ys =  Ys_covar + err
+    
+    # true signal at a given x
+    Ntrue = 200
+    true_x = np.linspace(-1, 1, int(Ntrue/2))
+    true_x = np.concatenate((true_x, true_x))
+    true_y_covar = np.zeros((Ntrue, p))
+    true_y_covar[(true_x >= -.3) & (true_x <= .3),:]  = causal_effect_size*Bs
+    true_t = np.concatenate((np.zeros(int(Ntrue/2)), np.ones(int(Ntrue/2)))).astype(int)
+    true_y_covar[true_t == 0,:] = -true_y_covar[true_t == 0,:]
+    
+    true_y = true_y_covar
+    return(Ys, Ts, Xs, true_y, true_t, true_x)
+
+def kclass_rotation_cate(n, p, balance=1, causal_effect_size=1, covar_effect_size=None, pi=0.5, err_scale = 0.5, K=3):
+    rotation = causal_effect_size * np.pi/2  # Angle of rotation of the second group
+    rot_rescale = np.cos(rotation)  # the rescaling factor for the rotation of the second group
+    
+    Ts = np.random.choice(range(0, K), size=n, p=np.concatenate(([pi], (1-pi)*1/(K-1)*np.ones((K-1)))))
+    Xs = simulate_covars_multiclass(Ts, balance=balance)
+    y_base = sigmoid(8*Xs).reshape(n, 1)
+    Bs = np.sqrt(np.linspace(1/np.sqrt(p), 1/(p**2), p).reshape(1, p))
+    
+    if covar_effect_size is None:
+        covar_effect_size = 2*causal_effect_size
+        Bs_covar = Bs
+    else:
+        Bs_covar = np.ones((1, p))
+        
+    Ys_covar = covar_effect_size*y_base @ Bs
+        
+    rot_vec = np.ones((n))
+    rot_vec[Ts == 0] = rot_rescale
+    R = np.eye(n)
+    np.fill_diagonal(R, rot_vec)
+    
+    Ys_covar = R @ (Ys_covar - covar_effect_size/2*Bs)
+    Ys_covar = Ys_covar + covar_effect_size/2*Bs
+    err = np.random.normal(scale=err_scale, size=(n, p)).reshape(n, p)
+    Ys = Ys_covar + err    
+    
+    # true signal at a given x
+    Ntrue = K*100
+    true_x = np.linspace(-1, 1, int(Ntrue/K))
+    true_x = np.concatenate([true_x for k in range(0, K)])
+    true_y_base = sigmoid(8*true_x).reshape(Ntrue, 1)
+    true_y_covar = covar_effect_size*true_y_base @ Bs
+    true_t = np.concatenate([np.zeros(int(Ntrue/K)) + k for k in range(0, K)]).astype(int)
+    rot_vec_true = np.ones((Ntrue))
+    rot_vec_true[true_t == 0] = rot_rescale
+    R_true = np.eye(Ntrue)
+    np.fill_diagonal(R_true, rot_vec_true)
+    true_y = R_true @ (true_y_covar - covar_effect_size/2*Bs)
+    true_y = true_y + covar_effect_size/2*Bs
+    return(Ys, Ts, Xs, true_y, true_t, true_x)
