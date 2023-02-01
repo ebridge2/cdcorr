@@ -268,7 +268,7 @@ def nonmonotonic_sim_cate(n, p, balance=1, causal_effect_size=1, covar_effect_si
         Bs_covar = np.ones((1, p))
     
     Ys_covar = np.zeros((n, p))
-    Ys_covar[(Xs >= -.3) & (Xs <= .3),:]  = causal_effect_size*Bs
+    Ys_covar[(Xs >= -.3) & (Xs <= .3),:]  = causal_effect_size/2*Bs
     Ys_covar[Ts == 0,:] = -Ys_covar[Ts == 0,:]
     err = np.random.normal(scale=err_scale, size=(n, p)).reshape(n, p)
     Ys =  Ys_covar + err
@@ -278,7 +278,7 @@ def nonmonotonic_sim_cate(n, p, balance=1, causal_effect_size=1, covar_effect_si
     true_x = np.linspace(-1, 1, int(Ntrue/2))
     true_x = np.concatenate((true_x, true_x))
     true_y_covar = np.zeros((Ntrue, p))
-    true_y_covar[(true_x >= -.3) & (true_x <= .3),:]  = causal_effect_size*Bs
+    true_y_covar[(true_x >= -.3) & (true_x <= .3),:]  = causal_effect_size/2*Bs
     true_t = np.concatenate((np.zeros(int(Ntrue/2)), np.ones(int(Ntrue/2)))).astype(int)
     true_y_covar[true_t == 0,:] = -true_y_covar[true_t == 0,:]
     
