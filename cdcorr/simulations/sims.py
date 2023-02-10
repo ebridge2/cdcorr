@@ -6,6 +6,9 @@ import dodiscover as dod
 import hyppo
 import scipy as sp
 import sklearn as sk
+from rpy2.robjects.packages import STAP
+from rpy2.robjects import numpy2ri
+numpy2ri.activate()
 
 def sigmoid(x):
     return 1/(1 + np.exp(-x))
@@ -132,11 +135,12 @@ def kclass_sim(n, p, balance=1, causal_effect_size=1, covar_effect_size=None, pi
     return(Ys, Ts, Xs, true_y, true_t, true_x)
 
 def cond_manova(Y, T, X, **kwargs):
-    m_man = sm.multivariate.MANOVA(Y, np.vstack((X, T, np.ones(Y.shape[0]))).transpose())
-    testout = m_man.mv_test()
-    pbt = testout.results["x1"]["stat"].iloc[1]
-    stat, pval = (pbt[0], pbt[4])
-    return pval, stat
+    with open('cmanova.R', 'r') as f:
+        string = f.read()
+    cmanova = STAP(string, "cmanova")
+    stat, pval = cmanova.cmanova(Y, T, X)
+    return (stat, pval)
+
 
 def codite(Y, T, X, nrep=1000):
     df_dict = {"Covariate" : X, "Batch" : T}
@@ -163,14 +167,6 @@ def dcorr(Y, T, X, nrep=1000):
     DT = sk.metrics.pairwise_distances(ohe(T), metric="l2")
     DY = sk.metrics.pairwise_distances(Y, metric="l2")
     stat, pval = hyppo.independence.Dcorr(compute_distance=None).test(DY, DT, reps=nrep)
-    return pval, stat
-
-def cond_manova(Y, T, X, **kwargs):
-    Tohe = ohe(T)[:,1:]
-    m_man = sm.multivariate.MANOVA(Y, np.vstack((X, Tohe, np.ones(Y.shape[0]))).transpose())
-    testout = m_man.mv_test()
-    pbt = testout.results["x1"]["stat"].iloc[1]
-    stat, pval = (pbt[0], pbt[4])
     return pval, stat
     
 def causal_prep(Xs, Ts):
