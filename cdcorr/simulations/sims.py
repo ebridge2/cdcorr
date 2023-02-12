@@ -139,7 +139,7 @@ def cond_manova(Y, T, X, **kwargs):
         string = f.read()
     cmanova = STAP(string, "cmanova")
     stat, pval = cmanova.cmanova(Y, T, X)
-    return (stat, pval)
+    return float(pval), float(stat)
 
 
 def codite(Y, T, X, nrep=1000):
@@ -250,13 +250,13 @@ def sigmoidal_sim_cate(n, p, balance=1, causal_effect_size=1, covar_effect_size 
     true_y = true_y + covar_effect_size/2*Bs
     return(Ys, Ts, Xs, true_y, true_t, true_x)
 
-def diff_fn_cate(n, p, balance=1, causal_effect_size=1, covar_effect_size=None, pi=0.5, err_scale=1):
+def diff_fn_cate(n, p, balance=1, causal_effect_size=1, covar_effect_size=None, pi=0.5, err_scale=0.5):
     Ts = np.random.binomial(1, pi, size=n)
     Xs = simulate_covars(Ts, balance=balance)
     y_base = np.zeros((n,1))
     y_base[Ts == 0,:] = sigmoid((10*causal_effect_size + 2)*Xs[Ts == 0]).reshape(-1, 1)
     y_base[Ts == 1,:] = sigmoid(2*Xs[Ts == 1]).reshape(-1, 1)
-    Bs = 2/(np.power(np.arange(p) + 1, 1.5)).reshape(1, p)
+    Bs = 2/(np.power(np.arange(p) + 1, 1.1)).reshape(1, p)
     
     if covar_effect_size is None:
         covar_effect_size = 2*causal_effect_size
@@ -280,32 +280,10 @@ def diff_fn_cate(n, p, balance=1, causal_effect_size=1, covar_effect_size=None, 
     return(Ys, Ts, Xs, true_y, true_t, true_x)
     
 def heteroskedastic_cate(n, p, balance=1, causal_effect_size=1, covar_effect_size=None, pi=0.5, err_scale=0.5):
-    Ts = np.random.binomial(1, pi, size=n)
-    Xs = simulate_covars(Ts, balance=balance)
-    Bs = 2/(np.power(np.arange(p) + 1, 1.5)).reshape(1, p)
-    
-    if covar_effect_size is None:
-        covar_effect_size = 2*causal_effect_size
-        Bs_covar = Bs
-    else:
-        Bs_covar = np.ones((1, p))
-    
-    Ys_base = covar_effect_size*Xs
-    expX = np.zeros((n,1))
-    expX[Ts == 0,:] = np.exp(2.5*causal_effect_size*Xs[Ts == 0]).reshape(-1, 1)
-    expX[Ts == 1,:] = np.exp(-2.5*causal_effect_size*Xs[Ts == 1]).reshape(-1, 1)
-    expX = expX @ Bs + err_scale
-    err = np.random.normal(scale=1, size=(n, p)).reshape(n, p)
-    Ys = np.tile(Ys_base, (p, 1)).transpose() + expX*err
-    
-    # true signal at a given x
-    Ntrue = 200
-    true_x = np.linspace(-1, 1, int(Ntrue/2))
-    true_x = np.concatenate((true_x, true_x))
-    true_t = np.concatenate((np.zeros(int(Ntrue/2)), np.ones(int(Ntrue/2)))).astype(int)
-    true_y_base = true_x * covar_effect_size
-    true_y = np.tile(true_y_base.reshape(-1, 1), p)
+    Ys, Ts, Xs, true_y, true_t, true_x = sigmoidal_sim_cate(n, p, balance=balance, causal_effect_size=0, covar_effect_size=covar_effect_size, pi=pi, err_scale=err_scale)
+    Ys[Ts == 0,:] = Ys[Ts == 0,:] + np.random.normal(scale=np.sqrt(2*causal_effect_size), size=(np.sum(Ts == 0), p)).reshape(-1, p)
     return(Ys, Ts, Xs, true_y, true_t, true_x)
+
 
 def nonmonotonic_sim_cate(n, p, balance=1, causal_effect_size=1, covar_effect_size = None, pi=0.5, err_scale = 1):
     Ts = np.random.binomial(1, pi, size=n)
@@ -344,7 +322,7 @@ def kclass_rotation_cate(n, p, balance=1, causal_effect_size=1, covar_effect_siz
     Ts = np.random.choice(range(0, K), size=n, p=np.concatenate(([pi], (1-pi)*1/(K-1)*np.ones((K-1)))))
     Xs = simulate_covars_multiclass(Ts, balance=balance)
     y_base = sigmoid(8*Xs).reshape(n, 1)
-    Bs = 2/(np.power(np.arange(p) + 1, 1.5)).reshape(1, p)
+    Bs = 2/(np.power(np.arange(p) + 1, 1.1)).reshape(1, p)
     
     if covar_effect_size is None:
         covar_effect_size = 2*causal_effect_size
