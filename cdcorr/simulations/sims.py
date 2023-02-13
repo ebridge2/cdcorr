@@ -169,7 +169,7 @@ def dcorr(Y, T, X, nrep=1000):
     stat, pval = hyppo.independence.Dcorr(compute_distance=None).test(DY, DT, reps=nrep)
     return pval, stat
     
-def causal_prep(Xs, Ts):
+def causal_prep(Xs, Ts, return_props=False):
     # adopted from Lopez 2017 Matching to estimate the causal effect
     # from multiple treatments
     Xs = sm.add_constant(Xs)
@@ -199,7 +199,10 @@ def causal_prep(Xs, Ts):
         for i in range(0, Xs.shape[0]):
             balance_check[i, T] = pred[i, T] >= Rtable[T][0] and pred[i, T] <= Rtable[T][1]
     balanced_ids = balance_check.all(axis=1)
-    return(balanced_ids)
+    if return_props:
+        return (balance_ids, pred)
+    else:
+        return balance_ids
 
 def ohe(T):
     K = len(np.unique(T))
