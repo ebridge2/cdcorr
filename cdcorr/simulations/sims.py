@@ -200,9 +200,9 @@ def causal_prep(Xs, Ts, return_props=False):
             balance_check[i, T] = pred[i, T] >= Rtable[T][0] and pred[i, T] <= Rtable[T][1]
     balanced_ids = balance_check.all(axis=1)
     if return_props:
-        return (balance_ids, pred)
+        return (balanced_ids, pred)
     else:
-        return balance_ids
+        return balanced_ids
 
 def ohe(T):
     K = len(np.unique(T))
