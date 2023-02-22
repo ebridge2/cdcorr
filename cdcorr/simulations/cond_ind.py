@@ -42,6 +42,14 @@ def rcot(Y, T, X, nrep=1000):
     return float(pval), float(stat)
 
 
+def wgcm(Y, T, X, nrep=1000):
+    with open('cond_ind.R', 'r') as f:
+        string = f.read()
+    cond_ind = STAP(string, "cond_ind")
+    stat, pval = cond_ind.wgcm_wrap(Y, ohe(T), X, nrep=nrep)
+    return float(pval), float(stat)
+
+
 def kernelcdtest(Y, T, X, nrep=1000):
     df_dict = {"Covariate" : X, "Batch" : T}
     yvars = []

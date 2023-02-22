@@ -11,5 +11,5 @@ RUN pip install statsmodels
 RUN apt-get install -y r-base
 RUN pip install rpy2
 
-RUN git clone --recursive-submodules git@github.com:ebridge2/cdcorr.git /cdcorr
 RUN R -e "install.packages('GeneralisedCovarianceMeasure', dependencies=TRUE)"
+RUN R -e "install.packages('weightedGCM', dependencies=TRUE)"
