@@ -1,0 +1,3 @@
+[submodule "cdcorr/simulations/RCIT"]
+	path = cdcorr/simulations/RCIT
+	url = git@github.com:ebridge2/RCIT.git
