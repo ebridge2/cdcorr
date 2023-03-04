@@ -1,6 +1,7 @@
 # setwd("~/Documents/research/hypo-repos/cdcorr/cdcorr/simulations/")
 suppressMessages(require(stats))
 suppressMessages(require(weightedGCM))
+suppressMessages(require(GeneralisedCovarianceMeasure))
 
 fnames = list.files("./RCIT/R/", full.names=TRUE)
 sapply(fnames, function(f) suppressMessages(source(f)))
@@ -48,4 +49,13 @@ wgcm_wrap <- function(Y, G, X, nrep=1000) {
       return(list(stat=NaN, pvalue=NaN))
     })
   return(list(stat=NaN, pvalue=res))
+}
+
+gcm_wrap <- function(Y, G, X, nrep=1000) {
+  res <- tryCatch({
+    gcm.test(as.matrix(Y), as.matrix(G), as.matrix(X), regr.meth="xgboost", nsim=nrep)},
+    error=function(e) {
+      return(list(stat=NaN, pvalue=NaN))
+    })
+  return(list(stat=res$test.statistic, pvalue=res$p.value))
 }
