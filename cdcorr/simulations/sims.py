@@ -10,6 +10,19 @@ import sklearn as sk
 def sigmoid(x):
     return 1/(1 + np.exp(-x))
 
+def simulate_covars_binary(causal_preds, balance=1):
+    covars = []
+    balance_id = np.random.binomial(balance)
+    plow = balance/2
+    phigh = 1 - plow
+    for causal_pred in causal_preds:
+        if causal_pred == 0:
+            covars.append((np.random.binomial(1, plow)))
+        else:
+            covars.append((np.random.binomial(1, phigh)))
+    covars = np.array(covars)
+    return covars
+
 def simulate_covars(causal_preds, balance=1):
     coefs = []
     #for causal_pred in causal_preds:

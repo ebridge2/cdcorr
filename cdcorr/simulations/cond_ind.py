@@ -59,14 +59,14 @@ def gcm(Y, T, X, nrep=1000):
 
 
 def kernelcdtest(Y, T, X, nrep=1000):
-    df_dict = {"Covariate" : X, "Batch" : T}
+    df_dict = {"Covariate" : X, "Group" : T}
     yvars = []
     for i in range(0, Y.shape[1]):
         yvar = "Y{:d}".format(i)
         df_dict[yvar] = Y[:,i]
         yvars.append(yvar)
     df = pd.DataFrame(df_dict)
-    xvars = "Covariate"; group_col="Batch"
+    xvars = "Covariate"; group_col="Group"
     stat, pval = dod.cd.KernelCDTest(null_reps=nrep).test(df, [xvars], yvars, group_col)
     return pval, stat
     
