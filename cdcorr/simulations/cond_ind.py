@@ -86,13 +86,13 @@ def dcorr(Y, T, X, nrep=1000):
     return pval, stat
 
 
-def causal_prep(Xs, Ts, return_props=False):
+def causal_prep(Xs, Ts, return_props=False, niter=35):
     # adopted from Lopez 2017 Matching to estimate the causal effect
     # from multiple treatments
     Xs = sm.add_constant(Xs)
     m = sm.MNLogit(Ts, Xs)
 
-    fit = m.fit()
+    fit = m.fit(maxiter=niter)
     pred = fit.predict(Xs)
 
     Ts_unique = np.unique(Ts)
