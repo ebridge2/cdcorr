@@ -13,3 +13,4 @@ RUN pip install rpy2
 
 RUN R -e "install.packages('GeneralisedCovarianceMeasure', dependencies=TRUE)"
 RUN R -e "install.packages('weightedGCM', dependencies=TRUE)"
+RUN R -e "install.packages(c('devtools', 'energy', 'vegan', 'cdcsis', 'reticulate'), dependencies=TRUE)"
